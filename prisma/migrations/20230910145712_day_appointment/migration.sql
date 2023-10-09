@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `consulta` ADD COLUMN `appointment` DATETIME(0) NULL DEFAULT CURRENT_TIMESTAMP(0);

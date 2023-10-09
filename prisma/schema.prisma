@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model paciente {
+  id           String                 @id @default(uuid())
+  nome         String?                @db.VarChar(100)
+  email        String?                @unique(map: "email") @db.VarChar(100)
+  password     String?                @db.VarChar(100)
+  role         String?                @default("C") @db.VarChar(2)
+  created_at   DateTime?              @default(now()) @db.DateTime(0)
+  deleted_at   DateTime?              @db.DateTime(0)
+  updated_at   DateTime?              @default(now()) @db.DateTime(0)
+  consulta     consulta[]
+  professional professionalpaciente[]
+  prontuario   prontuario?
+}
+
+model professional {
+  id         String                 @id @default(uuid())
+  nome       String?                @db.VarChar(100)
+  email      String?                @unique(map: "email") @db.VarChar(100)
+  password   String?                @db.VarChar(100)
+  role       String?                @default("P") @db.VarChar(2)
+  created_at DateTime?              @default(now()) @db.DateTime(0)
+  deleted_at DateTime?              @db.DateTime(0)
+  updated_at DateTime?              @default(now()) @db.DateTime(0)
+  crp        String?                @db.VarChar(100)
+  consulta   consulta[]
+  pacientes  professionalpaciente[]
+}
+
+model consulta {
+  id             String          @id @default(uuid())
+  descricao      String?
+  pacienteId     String          @db.VarChar(100)
+  profissionalId String          @db.VarChar(100)
+  statusId       String?
+  appointment    DateTime?       @default(now()) @db.DateTime(0)
+  created_at     DateTime?       @default(now()) @db.DateTime(0)
+  deleted_at     DateTime?       @db.DateTime(0)
+  updated_at     DateTime?       @default(now()) @db.DateTime(0)
+  paciente       paciente        @relation(fields: [pacienteId], references: [id])
+  profissional   professional    @relation(fields: [profissionalId], references: [id])
+  status         statusconsulta? @relation("statusConsulta", fields: [statusId], references: [id])
+
+  @@index([pacienteId], map: "consulta_pacienteId_fkey")
+  @@index([profissionalId], map: "consulta_profissionalId_fkey")
+  @@index([statusId], map: "consulta_statusId_fkey")
+}
+
+model refresh_tokens {
+  id              String  @id @default(uuid())
+  token           String? @db.VarChar(255)
+  professional_id String?
+  paciente_id     String?
+  expire_in       String? @db.VarChar(255)
+
+  @@index([paciente_id], map: "refresh_tokens_paciente_id_fkey")
+  @@index([professional_id], map: "refresh_tokens_professional_id_fkey")
+}
+
+model medicalreport {
+  id         String    @id
+  complaint  String?
+  evolution  String?
+  consultaId String    @unique(map: "medicalReport_consultaId_key")
+  created_at DateTime? @default(now()) @db.DateTime(0)
+  deleted_at DateTime? @db.DateTime(0)
+  updated_at DateTime? @default(now()) @db.DateTime(0)
+}
+
+model professionalpaciente {
+  id             String       @id @default(uuid())
+  pacienteId     String       @db.VarChar(100)
+  profissionalId String       @db.VarChar(100)
+  paciente       paciente     @relation(fields: [pacienteId], references: [id])
+  profissional   professional @relation(fields: [profissionalId], references: [id])
+
+  @@index([pacienteId], map: "professionalpaciente_pacienteId_fkey")
+  @@index([profissionalId], map: "professionalpaciente_profissionalId_fkey")
+}
+
+model reset_password_professional {
+  id              String    @id @default(uuid())
+  token           String?   @db.VarChar(255)
+  expiration_data String?   @db.VarChar(255)
+  professionalId  String?   @db.VarChar(100)
+  used            Boolean?  @default(false)
+  created_at      DateTime? @default(now()) @db.DateTime(0)
+  updated_at      DateTime? @default(now()) @db.DateTime(0)
+  pacienteId      String?   @db.VarChar(100)
+
+  @@index([professionalId], map: "Reset_Password_Professional_professionalId_fkey")
+  @@index([pacienteId], map: "Reset_Password_Professional_pacienteId_fkey")
+}
+
+model statusconsulta {
+  id     String     @id
+  nome   String?    @unique(map: "statusConsulta_nome_key")
+  status consulta[] @relation("statusConsulta")
+}
+
+model prontuario {
+  id          String                @id @default(uuid())
+  paciente_Id String                @unique @db.VarChar(100)
+  paciente    paciente              @relation(fields: [paciente_Id], references: [id])
+  questions   prontuario_question[]
+}
+
+model prontuario_question {
+  id            Int        @id @default(autoincrement())
+  question      String?    @db.VarChar(255)
+  response      String?    @db.VarChar(255)
+  input         String?    @db.VarChar(20)
+  prontuario_id String     @db.VarChar(100)
+  prontuario    prontuario @relation(fields: [prontuario_id], references: [id])
+
+  @@index([prontuario_id], map: "prontuario_question_prontuario_id_fkey")
+}
